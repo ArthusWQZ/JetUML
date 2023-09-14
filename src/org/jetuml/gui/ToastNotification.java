@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -30,12 +31,12 @@ public class ToastNotification {
 
         Text text = new Text(pMessage);
 
-        text.setFont(Font.font(10));
+        text.setFont(Font.font(12));
         text.setFill(Color.WHITE);
 
         StackPane pane = new StackPane(text);
 
-        pane.setStyle("-fx-padding: 10px; -fx-background-color: rgb(200, 50, 50); -fx-background-radius: 10");
+        pane.setStyle("-fx-padding: 8px; -fx-background-color: rgb(200, 70, 70); -fx-background-radius: 10");
         pane.setOpacity(0);
 
         Scene scene = new Scene(pane);
