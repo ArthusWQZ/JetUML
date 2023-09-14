@@ -21,13 +21,15 @@ public class ToastNotification {
 
     private final Stage aStage;
 
-    protected ToastNotification(String pMessage, Stage pOwnerStage) {
+    protected ToastNotification(String pMessage, Stage pOwnerStage, double pX, double pY) {
 
         Stage stage = new Stage();
 
         stage.initOwner(pOwnerStage);
         stage.setResizable(false);
         stage.initStyle(StageStyle.TRANSPARENT);
+        stage.setX(pX);
+        stage.setY(pY);
 
         Text text = new Text(pMessage);
 
@@ -75,5 +77,8 @@ public class ToastNotification {
         });
         fadeInTimeline.play();
     }
+
+    protected void setX(double pX) { this.aStage.setX(pX); }
+    protected void setY(double pY) { this.aStage.setY(pY); }
 
 }
