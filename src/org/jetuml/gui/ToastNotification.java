@@ -46,7 +46,7 @@ public class ToastNotification {
         this.aStage = stage;
     }
 
-    protected void show(double pX, double pY) {
+    protected void show(double pX, double pY, NotificationHandler.CleanUpCommand pCommand) {
         this.aStage.show();
 
         this.aStage.setX(pX);
@@ -69,7 +69,10 @@ public class ToastNotification {
                 KeyFrame fadeOutKey = new KeyFrame(Duration.millis(FADE_OUT_DELAY), new KeyValue(this.aStage.getScene().getRoot().opacityProperty(), 0));
 
                 fadeOutTimeline.getKeyFrames().add(fadeOutKey);
-                fadeOutTimeline.setOnFinished(actionEvent1 -> aStage.close()); // AUTO CLOSE ?
+                fadeOutTimeline.setOnFinished(actionEvent1 -> {
+                    aStage.close();
+                    pCommand.execute(this);
+                }); // AUTO CLOSE ?
 
                 fadeOutTimeline.play();
 

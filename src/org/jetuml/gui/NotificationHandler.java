@@ -29,6 +29,18 @@ public class NotificationHandler {
 
     }
 
+    public class CleanUpCommand {
+
+        private CleanUpCommand() {}
+
+        public void execute(ToastNotification pToast) {
+            if (INSTANCE.aNotificationList.contains(pToast)) {
+                INSTANCE.aNotificationList.remove(pToast);
+            }
+        }
+
+    }
+
     public void spawn(String pText) {
 
         if (this.aMainStage == null) return;
@@ -41,9 +53,9 @@ public class NotificationHandler {
         this.updateVerticalPosition(1);
         aNotificationList.add(toast);
 
-        System.out.println(aNotificationList.size());
+        // System.out.println(aNotificationList.size());
 
-        toast.show(x, y);
+        toast.show(x, y, new CleanUpCommand());
 
         // TODO: remove toast from aNotificationList
 
