@@ -21,15 +21,13 @@ public class ToastNotification {
 
     private final Stage aStage;
 
-    protected ToastNotification(String pMessage, Stage pOwnerStage, double pX, double pY) {
+    protected ToastNotification(String pMessage, Stage pOwnerStage) {
 
         Stage stage = new Stage();
 
         stage.initOwner(pOwnerStage);
         stage.setResizable(false);
         stage.initStyle(StageStyle.TRANSPARENT);
-        stage.setX(pX);
-        stage.setY(pY);
 
         Text text = new Text(pMessage);
 
@@ -48,8 +46,11 @@ public class ToastNotification {
         this.aStage = stage;
     }
 
-    protected void show() {
+    protected void show(double pX, double pY) {
         this.aStage.show();
+
+        this.aStage.setX(pX);
+        this.aStage.setY(pY - this.aStage.getHeight());
 
         Timeline fadeInTimeline = new Timeline();
         KeyFrame fadeInKey = new KeyFrame(Duration.millis(FADE_IN_DELAY), new KeyValue(this.aStage.getScene().getRoot().opacityProperty(), 1));
@@ -79,6 +80,6 @@ public class ToastNotification {
     }
 
     protected void setX(double pX) { this.aStage.setX(pX); }
-    protected void setY(double pY) { this.aStage.setY(pY); }
+    protected void setY(double pY) { this.aStage.setY(pY-this.aStage.getHeight()); }
 
 }
