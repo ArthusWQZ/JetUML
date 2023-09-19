@@ -29,9 +29,9 @@ public class NotificationHandler {
 
     }
 
-    public class CleanUpCommand {
+    public class CleanUpCallback {
 
-        private CleanUpCommand() {}
+        private CleanUpCallback() {}
 
         public void execute(ToastNotification pToast) {
             if (INSTANCE.aNotificationList.contains(pToast)) {
@@ -55,7 +55,7 @@ public class NotificationHandler {
 
         // System.out.println(aNotificationList.size());
 
-        toast.show(x, y, new CleanUpCommand());
+        toast.show(x, y, new CleanUpCallback());
 
         // TODO: remove toast from aNotificationList
 
