@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import org.jetuml.application.UserPreferences;
 import org.jetuml.application.Version;
 import org.jetuml.diagram.Diagram;
@@ -104,6 +106,15 @@ public final class JetUML extends Application
 		diagramToOpen.ifPresent(diagram -> editor.setOpenFileAsDiagram(fileToOpen.get(), diagram));
 		pStage.setScene(new Scene(editor));
 		NotificationHandler.getInstance().setStage(pStage);
+
+		ChangeListener<Number> stageMoveListener = new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> ov, Number oldValue, Number newValue) {
+				NotificationHandler.getInstance().updatePosition();
+			}
+		};
+		pStage.xProperty().addListener(stageMoveListener);
+		pStage.yProperty().addListener(stageMoveListener);
 
 		pStage.getScene().getStylesheets().add(getClass().getResource("JetUML.css").toExternalForm());
 

@@ -41,6 +41,17 @@ public class NotificationHandler {
 
     }
 
+    public void updatePosition() {
+
+        double y = this.aMainStage.getY() + this.aMainStage.getHeight() - 18;
+        double x = this.aMainStage.getX()+18;
+        for (int i = 0; i < aNotificationList.size(); i++) {
+            ToastNotification toast = aNotificationList.get(i);
+            toast.setX(x);
+            toast.setY( y - 40*( (aNotificationList.size() - 1 - i)) );
+        }
+    }
+
     public void spawn(String pText) {
 
         if (this.aMainStage == null) return;
