@@ -31,15 +31,17 @@ import org.jetuml.diagram.nodes.FinalStateNode;
 import org.jetuml.diagram.nodes.InitialStateNode;
 import org.jetuml.diagram.nodes.StateNode;
 
+import javax.swing.plaf.nimbus.State;
+
 /**
  * Validator for state diagrams.
  */
 public class StateDiagramValidator extends AbstractDiagramValidator
 {
-	private static final Set<EdgeConstraint> CONSTRAINTS = Set.of(
-			AbstractDiagramValidator.createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(2),
-			StateDiagramValidator::constraintValidTransitionEdgeStartNode,
-			StateDiagramValidator::constraintValidTransitionEdgeEndNode);
+	private static final Set<AbstractEdgeConstraint> CONSTRAINTS = Set.of(
+			new AbstractDiagramValidator.ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(2),
+			new StateDiagramValidator.ConstraintValidTransitionEdgeStartNode(),
+			new StateDiagramValidator.ConstraintValidTransitionEdgeEndNode());
 
 	private static final Set<Class<? extends Node>> VALID_NODE_TYPES = Set.of(
 			StateNode.class,
@@ -60,7 +62,37 @@ public class StateDiagramValidator extends AbstractDiagramValidator
 		super(pDiagram, VALID_NODE_TYPES, VALID_EDGE_TYPES, CONSTRAINTS);
 		assert pDiagram.getType() == DiagramType.STATE;
 	}
-	
+
+	private static final class ConstraintValidTransitionEdgeStartNode extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() == StateTransitionEdge.class &&
+					pEdge.start().getClass() != InitialStateNode.class &&
+					pEdge.start().getClass() != StateNode.class);
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "ValidTransitionEdgeStartNode";
+		}
+	}
+
 	/*
 	 * A transition can only start in an initial node or a state node
 	 */
@@ -70,7 +102,37 @@ public class StateDiagramValidator extends AbstractDiagramValidator
 				pEdge.start().getClass() != InitialStateNode.class &&
 				 pEdge.start().getClass() != StateNode.class);
 	}
-	
+
+	private static final class ConstraintValidTransitionEdgeEndNode extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() == StateTransitionEdge.class &&
+					pEdge.end().getClass() != FinalStateNode.class &&
+					pEdge.end().getClass() != StateNode.class);
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "ValidTransitionEdgeEndNode";
+		}
+	}
+
 	/*
 	 * A transition can only end in an final node or a state node or a note node
 	 */

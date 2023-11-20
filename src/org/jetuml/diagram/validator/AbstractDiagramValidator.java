@@ -40,14 +40,14 @@ abstract class AbstractDiagramValidator implements DiagramValidator
 			Set.of(PointNode.class, NoteNode.class);
 	private static final Set<Class<? extends Edge>> UNIVERSAL_EDGES_TYPES = 
 			Set.of(NoteEdge.class);
-	private static final Set<EdgeConstraint> UNIVERSAL_CONSTRAINTS =
-			Set.of(AbstractDiagramValidator::constraintValidNoteEdge,
-					AbstractDiagramValidator::constraintNoEdgeToPointExceptNoteEdge);
+	private static final Set<AbstractEdgeConstraint> UNIVERSAL_CONSTRAINTS =
+			Set.of(new ConstraintValidNoteEdge(),
+					new ConstraintNoEdgeToPointExceptNoteEdge());
 	
 	private final Diagram aDiagram;
 	private final Set<Class<? extends Node>> aValidNodeTypes = new HashSet<>();
 	private final Set<Class<? extends Edge>> aValidEdgeTypes = new HashSet<>();
-	private final Set<EdgeConstraint> aConstraints = new HashSet<>();
+	private final Set<AbstractEdgeConstraint> aConstraints = new HashSet<>();
 
 	/**
 	 * Creates a validator for pDiagram.
@@ -60,7 +60,7 @@ abstract class AbstractDiagramValidator implements DiagramValidator
 	 * @pre pDiagram != null && pValidNodeTypes != null && pValidEdgeTypes != null;
 	 */
 	protected AbstractDiagramValidator(Diagram pDiagram, Set<Class<? extends Node>> pValidNodeTypes, 
-			Set<Class<? extends Edge>> pValidEdgeTypes, Set<EdgeConstraint> pEdgeConstraints)
+			Set<Class<? extends Edge>> pValidEdgeTypes, Set<AbstractEdgeConstraint> pEdgeConstraints)
 	{
 		assert pDiagram != null && pValidNodeTypes != null && pValidEdgeTypes != null;
 		
@@ -98,10 +98,10 @@ abstract class AbstractDiagramValidator implements DiagramValidator
 	public final boolean hasValidSemantics()
 	{
 		return aDiagram.edges().stream()
-				.allMatch(edge -> allConstraintsSatistifed(edge));
+				.allMatch(edge -> allConstraintsSatisfied(edge));
 	}
 	
-	private boolean allConstraintsSatistifed(Edge pEdge)
+	private boolean allConstraintsSatisfied(Edge pEdge)
 	{
 		return aConstraints.stream()
 				.allMatch(constraint -> constraint.satisfied(pEdge, aDiagram));
@@ -154,29 +154,73 @@ abstract class AbstractDiagramValidator implements DiagramValidator
 	 * 1. From a note node to a point node
 	 * 2. From any node except a note node or a point node to a note node
 	 */
-	private static boolean constraintValidNoteEdge(Edge pEdge, Diagram pDiagram)
+	private static final class ConstraintValidNoteEdge extends AbstractEdgeConstraint
 	{
-		if( pEdge.getClass() != NoteEdge.class )
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
 		{
-			return true;
+			if( pEdge.getClass() != NoteEdge.class )
+			{
+				return true;
+			}
+			if( pEdge.end().getClass() == PointNode.class )
+			{
+				return pEdge.start().getClass() == NoteNode.class;
+			}
+			return pEdge.start().getClass() != PointNode.class && pEdge.start().getClass() != NoteNode.class &&
+					pEdge.end().getClass() == NoteNode.class;
 		}
-		if( pEdge.end().getClass() == PointNode.class )
+
+		@Override
+		protected String description()
 		{
-			return pEdge.start().getClass() == NoteNode.class;
+			return "ValidNoteEdge";
 		}
-		return pEdge.start().getClass() != PointNode.class && pEdge.start().getClass() != NoteNode.class &&
-				pEdge.end().getClass() == NoteNode.class;
 	}
-	
+
 	/*
 	 * Validates that only note edges can point to point nodes
 	 */
-	private static boolean constraintNoEdgeToPointExceptNoteEdge(Edge pEdge, Diagram pDiagram)
+	private static final class ConstraintNoEdgeToPointExceptNoteEdge extends AbstractEdgeConstraint
 	{
-		return !(pEdge.getClass() != NoteEdge.class && 
-				(pEdge.start().getClass() == PointNode.class || pEdge.end().getClass() == PointNode.class));
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() != NoteEdge.class &&
+					(pEdge.start().getClass() == PointNode.class || pEdge.end().getClass() == PointNode.class));
+		}
+
+		@Override
+		protected String description()
+		{
+			return "ConstraintNoEdgeToPointExceptNodeEdge";
+		}
 	}
-	
+
+	public static final class ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes extends AbstractEdgeConstraint
+	{
+		private int aMaxNumberOfEdges;
+
+		ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(int pMaxNumberOfEdges)
+		{
+			aMaxNumberOfEdges = pMaxNumberOfEdges;
+		}
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return numberOfEdges(pEdge, pDiagram) <= aMaxNumberOfEdges;
+		}
+
+		@Override
+		protected String description()
+		{
+			return "MaxNumberOfEdges";
+		}
+	}
+
 	public static EdgeConstraint createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(int pMaxNumberOfEdges)
 	{
 		return (edge, diagram) -> numberOfEdges(edge, diagram) <= pMaxNumberOfEdges;
@@ -198,12 +242,77 @@ abstract class AbstractDiagramValidator implements DiagramValidator
 		}
 		return result;
 	}
-	
+
+	public static final class ConstraintNoSelfEdgeForEdgeType extends AbstractEdgeConstraint
+	{
+
+		private Class<? extends Edge> aEdgeType;
+
+		ConstraintNoSelfEdgeForEdgeType(Class<? extends Edge> pEdgeType)
+		{
+			aEdgeType = pEdgeType;
+		}
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() == aEdgeType && pEdge.start() == pEdge.end());
+		}
+
+		@Override
+		protected String description()
+		{
+			return "NoSelfEdgeForEdgeType";
+		}
+
+	}
+
 	public static EdgeConstraint createConstraintNoSelfEdgeForEdgeType(Class<? extends Edge> pEdgeType)
 	{
 		return (edge, diagram) -> !(edge.getClass() == pEdgeType && edge.start() == edge.end());
 	}
-	
+
+	/**
+	 * There can't be two edges of a given type, one in each direction, between
+	 * two DIFFERENT nodes.
+	 */
+	public static final class ConstraintNoDirectCyclesForEdgeType extends AbstractEdgeConstraint
+	{
+
+		private Class<? extends Edge> aEdgeType;
+
+		ConstraintNoDirectCyclesForEdgeType(Class<? extends Edge> pEdgeType)
+		{
+			aEdgeType = pEdgeType;
+		}
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			if( pEdge.getClass() != aEdgeType || pEdge.start() == pEdge.end() )
+			{
+				return true;
+			}
+
+			int sameDirectionCount = 0;
+			for( Edge edge : pDiagram.edgesConnectedTo(pEdge.start()) )
+			{
+				if( edge.getClass() == aEdgeType && edge.end() == pEdge.start() && edge.start() == pEdge.end() )
+				{
+					sameDirectionCount += 1;
+				}
+			}
+
+			return sameDirectionCount == 0;
+		}
+
+		@Override
+		protected String description()
+		{
+			return "NoDirectCycles";
+		}
+	}
+
 	/**
 	 * There can't be two edges of a given type, one in each direction, between
 	 * two DIFFERENT nodes.

@@ -38,12 +38,12 @@ import org.jetuml.diagram.nodes.ImplicitParameterNode;
  */
 public class SequenceDiagramValidator extends AbstractDiagramValidator
 {
-	private static final Set<EdgeConstraint> CONSTRAINTS = Set.of(
-			AbstractDiagramValidator.createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
-			SequenceDiagramValidator::constraintCallEdgeBetweenCallNodes,
-			SequenceDiagramValidator::constraintMaxOneCaller,
-			SequenceDiagramValidator::constraintReturnEdgeBetweenCallNodes,
-			SequenceDiagramValidator::constraintReturnsToCaller );
+	private static final Set<AbstractEdgeConstraint> CONSTRAINTS = Set.of(
+			new AbstractDiagramValidator.ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
+			new SequenceDiagramValidator.ConstraintCallEdgeBetweenCallNodes(),
+			new SequenceDiagramValidator.ConstraintMaxOneCaller(),
+			new SequenceDiagramValidator.ConstraintReturnEdgeBetweenCallNodes(),
+			new SequenceDiagramValidator.ConstraintReturnsToCaller());
 
 	private static final Set<Class<? extends Node>> VALID_NODE_TYPES = Set.of(
 			ImplicitParameterNode.class,
@@ -88,7 +88,24 @@ public class SequenceDiagramValidator extends AbstractDiagramValidator
 				.filter(nbOfCalleers -> nbOfCalleers == 0)				// Number of cases call nodes with no callers
 				.count() <= 1;
 	}
-	
+
+	private static final class ConstraintCallEdgeBetweenCallNodes extends AbstractEdgeConstraint
+	{
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge instanceof CallEdge && (pEdge.start().getClass() != CallNode.class ||
+					pEdge.end().getClass() != CallNode.class));
+		}
+
+		@Override
+		protected String description()
+		{
+			return "CallEdgeBetweenCallNodes";
+		}
+	}
+
 	/*
 	 * A call or constructor edge (subtype of CallEdge) can only be between call nodes
 	 */
@@ -97,7 +114,24 @@ public class SequenceDiagramValidator extends AbstractDiagramValidator
 		return !(pEdge instanceof CallEdge && (pEdge.start().getClass() != CallNode.class ||
 				pEdge.end().getClass() != CallNode.class));
 	}
-	
+
+	private static final class ConstraintReturnEdgeBetweenCallNodes extends AbstractEdgeConstraint
+	{
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge instanceof ReturnEdge && (pEdge.start().getClass() != CallNode.class ||
+					pEdge.end().getClass() != CallNode.class));
+		}
+
+		@Override
+		protected String description()
+		{
+			return "ReturnEdgeBetweenCallNodes";
+		}
+	}
+
 	/*
 	 * A return can only be between call nodes
 	 */
@@ -106,7 +140,27 @@ public class SequenceDiagramValidator extends AbstractDiagramValidator
 		return !(pEdge instanceof ReturnEdge && (pEdge.start().getClass() != CallNode.class ||
 				pEdge.end().getClass() != CallNode.class));
 	}
-	
+
+	private static final class ConstraintMaxOneCaller extends AbstractEdgeConstraint
+	{
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return pDiagram.allNodes().stream()								// Nodes
+					.filter(CallNode.class::isInstance)						// Call nodes
+					.map(node -> pDiagram.edgesTo(node, CallEdge.class))	// Lists of callers to call nodes
+					.mapToInt(List::size)									// Size of such lists
+					.allMatch(size -> size <= 1);
+		}
+
+		@Override
+		protected String description()
+		{
+			return "MaxOneCaller";
+		}
+	}
+
 	/*
 	 * There can be at most one caller to a call node. 
 	 */
@@ -117,6 +171,31 @@ public class SequenceDiagramValidator extends AbstractDiagramValidator
 				.map(node -> pDiagram.edgesTo(node, CallEdge.class))	// Lists of callers to call nodes
 				.mapToInt(List::size)									// Size of such lists
 				.allMatch(size -> size <= 1);
+	}
+
+	private static final class ConstraintReturnsToCaller extends AbstractEdgeConstraint
+	{
+
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			if( pEdge.getClass() != ReturnEdge.class )
+			{
+				return true;
+			}
+			List<Edge> calls = pDiagram.edgesTo(pEdge.start(), CallEdge.class);
+			if(calls.size() != 1)
+			{
+				return false;
+			}
+			return pEdge.end() == calls.get(0).start() && pEdge.end().getParent() != pEdge.start().getParent();
+		}
+
+		@Override
+		protected String description()
+		{
+			return "ReturnsToCaller";
+		}
 	}
 	
 	/*

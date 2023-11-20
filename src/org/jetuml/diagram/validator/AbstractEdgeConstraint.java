@@ -2,6 +2,8 @@ package org.jetuml.diagram.validator;
 
 import org.jetuml.diagram.Diagram;
 import org.jetuml.diagram.Edge;
+import org.jetuml.gui.EditorFrame;
+import org.jetuml.gui.ToastNotification;
 
 /**
  * Implementation of the general scaffolding for creating an Edge Constraint.
@@ -9,6 +11,13 @@ import org.jetuml.diagram.Edge;
  */
 public abstract class AbstractEdgeConstraint implements EdgeConstraint
 {
+
+    private static EditorFrame aEditorFrame;
+
+    public static void setEditorFrame(EditorFrame pEditorFrame)
+    {
+        aEditorFrame = pEditorFrame;
+    }
 
     /**
      * Determines if a constraint is satisfied, and spawns a notification if not.
@@ -22,10 +31,10 @@ public abstract class AbstractEdgeConstraint implements EdgeConstraint
     public final boolean satisfied(Edge pEdge, Diagram pDiagram)
     {
         boolean result = check(pEdge, pDiagram);
-        if (!result)
+        if (!result && aEditorFrame != null)
         {
             /* SPAWN NOTIFICATION */
-            System.out.println(description());
+            aEditorFrame.spawnNotification(description(), ToastNotification.Type.ERROR);
         }
         return result;
     }

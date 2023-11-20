@@ -40,15 +40,16 @@ import org.jetuml.diagram.nodes.PackageNode;
  */
 public class ClassDiagramValidator extends AbstractDiagramValidator
 {
-	private static final Set<EdgeConstraint> CONSTRAINTS = Set.of(
-			AbstractDiagramValidator.createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(GeneralizationEdge.class),
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(DependencyEdge.class),
-			AbstractDiagramValidator.createConstraintNoDirectCyclesForEdgeType(DependencyEdge.class),
-			AbstractDiagramValidator.createConstraintNoDirectCyclesForEdgeType(GeneralizationEdge.class),
-			AbstractDiagramValidator.createConstraintNoDirectCyclesForEdgeType(AggregationEdge.class),
-			AbstractDiagramValidator.createConstraintNoDirectCyclesForEdgeType(AssociationEdge.class),
-			ClassDiagramValidator::constraintNoCombinedAssociationAggregation);
+
+	private static final Set<AbstractEdgeConstraint> CONSTRAINTS = Set.of(
+			new AbstractDiagramValidator.ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(GeneralizationEdge.class),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(DependencyEdge.class),
+			new AbstractDiagramValidator.ConstraintNoDirectCyclesForEdgeType(DependencyEdge.class),
+			new AbstractDiagramValidator.ConstraintNoDirectCyclesForEdgeType(GeneralizationEdge.class),
+			new AbstractDiagramValidator.ConstraintNoDirectCyclesForEdgeType(AggregationEdge.class),
+			new AbstractDiagramValidator.ConstraintNoDirectCyclesForEdgeType(AssociationEdge.class),
+			new ClassDiagramValidator.ConstraintNoCombinedAssociationAggregation());
 
 	private static final Set<Class<? extends Node>> VALID_NODE_TYPES = Set.of(
 			ClassNode.class, 
@@ -72,6 +73,37 @@ public class ClassDiagramValidator extends AbstractDiagramValidator
 	{
 		super(pDiagram, VALID_NODE_TYPES, VALID_EDGE_TYPES, CONSTRAINTS);
 		assert pDiagram.getType() == DiagramType.CLASS;
+	}
+
+	private static final class ConstraintNoCombinedAssociationAggregation extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return pDiagram.edges().stream()
+					.filter(ClassDiagramValidator::isAssociationOrAggregation)
+					.filter(edge -> isBetweenSameNodes(edge, pEdge))
+					.count() <= 1;
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "NoCombinedAssociationAggregation";
+		}
 	}
 	
 	/**

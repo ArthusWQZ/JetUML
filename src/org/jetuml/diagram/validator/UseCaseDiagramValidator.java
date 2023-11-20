@@ -39,12 +39,12 @@ import org.jetuml.diagram.nodes.UseCaseNode;
  */
 public class UseCaseDiagramValidator extends AbstractDiagramValidator
 {
-	private static final Set<EdgeConstraint> CONSTRAINTS = Set.of(
-			AbstractDiagramValidator.createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(UseCaseAssociationEdge.class),
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(UseCaseGeneralizationEdge.class),
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(UseCaseDependencyEdge.class),
-			UseCaseDiagramValidator::constraintNoEdgeConnectedToNote);
+	private static final Set<AbstractEdgeConstraint> CONSTRAINTS = Set.of(
+			new AbstractDiagramValidator.ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(UseCaseAssociationEdge.class),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(UseCaseGeneralizationEdge.class),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(UseCaseDependencyEdge.class),
+			new UseCaseDiagramValidator.ConstraintNoEdgeConnectedToNote());
 
 	private static final Set<Class<? extends Node>> VALID_NODE_TYPES = Set.of(
 			ActorNode.class, 
@@ -66,6 +66,36 @@ public class UseCaseDiagramValidator extends AbstractDiagramValidator
 	{
 		super(pDiagram, VALID_NODE_TYPES, VALID_EDGE_TYPES, CONSTRAINTS);
 		assert pDiagram.getType() == DiagramType.USECASE;
+	}
+
+	private static final class ConstraintNoEdgeConnectedToNote extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() != NoteEdge.class &&
+					(pEdge.start().getClass() == NoteNode.class ||
+							pEdge.end().getClass() == NoteNode.class ));
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "NoEdgeConnectedToNote";
+		}
 	}
 	
 	/*

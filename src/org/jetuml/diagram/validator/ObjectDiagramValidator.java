@@ -36,12 +36,12 @@ import org.jetuml.diagram.nodes.ObjectNode;
  */
 public class ObjectDiagramValidator extends AbstractDiagramValidator
 {
-	private static final Set<EdgeConstraint> CONSTRAINTS = Set.of(
-			ObjectDiagramValidator::constraintValidReferenceEdge,
-			ObjectDiagramValidator::constraintValidCollaborationEdge,
-			AbstractDiagramValidator.createConstraintNoSelfEdgeForEdgeType(ObjectCollaborationEdge.class),
-			AbstractDiagramValidator.createConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
-			AbstractDiagramValidator.createConstraintNoDirectCyclesForEdgeType(ObjectCollaborationEdge.class));
+	private static final Set<AbstractEdgeConstraint> CONSTRAINTS = Set.of(
+			new ObjectDiagramValidator.ConstraintValidReferenceEdge(),
+			new ObjectDiagramValidator.ConstraintValidCollaborationEdge(),
+			new AbstractDiagramValidator.ConstraintNoSelfEdgeForEdgeType(ObjectCollaborationEdge.class),
+			new AbstractDiagramValidator.ConstraintMaxNumberOfEdgesOfGivenTypeBetweenNodes(1),
+			new AbstractDiagramValidator.ConstraintNoDirectCyclesForEdgeType(ObjectCollaborationEdge.class));
 	
 	private static final Set<Class<? extends Node>> VALID_NODE_TYPES = Set.of(
 			ObjectNode.class, 
@@ -71,7 +71,36 @@ public class ObjectDiagramValidator extends AbstractDiagramValidator
 	{
 		return diagram().rootNodes().stream().noneMatch(node -> node instanceof FieldNode);
 	}
-	
+
+	private static final class ConstraintValidReferenceEdge extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() == ObjectReferenceEdge.class &&
+					(pEdge.start().getClass() != FieldNode.class || pEdge.end().getClass() != ObjectNode.class));
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "ValidReferenceEdge";
+		}
+	}
+
 	/*
 	 * A reference edge can only be between an object node and a field node.
 	 */
@@ -79,6 +108,35 @@ public class ObjectDiagramValidator extends AbstractDiagramValidator
 	{
 		return !(pEdge.getClass() == ObjectReferenceEdge.class &&
 					(pEdge.start().getClass() != FieldNode.class || pEdge.end().getClass() != ObjectNode.class));
+	}
+
+	private static final class ConstraintValidCollaborationEdge extends AbstractEdgeConstraint
+	{
+
+		/**
+		 * Actual implementation of the constraint.
+		 *
+		 * @param pEdge    The edge being validated.
+		 * @param pDiagram The diagram containing the edge.
+		 * @return True if the edge is satisfied.
+		 * @pre pEdge != null && pDiagram != null && pDiagram.contains(pEdge)
+		 * @pre pEdge.start() != null && pEdge.end() != null;
+		 */
+		@Override
+		protected boolean check(Edge pEdge, Diagram pDiagram)
+		{
+			return !(pEdge.getClass() == ObjectCollaborationEdge.class &&
+					(pEdge.start().getClass() != ObjectNode.class || pEdge.end().getClass() != ObjectNode.class));
+		}
+
+		/**
+		 * @return A string to be displayed to the user when the constraint is not satisfied
+		 */
+		@Override
+		protected String description()
+		{
+			return "ValidCollaborationEdge";
+		}
 	}
 	
 	/*

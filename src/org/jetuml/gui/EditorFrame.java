@@ -50,6 +50,7 @@ import org.jetuml.application.UserPreferences;
 import org.jetuml.application.UserPreferences.BooleanPreference;
 import org.jetuml.diagram.Diagram;
 import org.jetuml.diagram.DiagramType;
+import org.jetuml.diagram.validator.AbstractEdgeConstraint;
 import org.jetuml.gui.tips.TipDialog;
 import org.jetuml.persistence.DeserializationException;
 import org.jetuml.persistence.PersistenceService;
@@ -93,7 +94,9 @@ public class EditorFrame extends BorderPane
 	private Menu aRecentFilesMenu;
 	private WelcomeTab aWelcomeTab;
 	private final List<Notification> aNotifications = new ArrayList<>();
-	
+
+	public static EditorFrame aInstance;
+
 	/**
 	 * Constructs a blank frame with a desktop pane but no diagram window.
 	 * 
@@ -142,6 +145,8 @@ public class EditorFrame extends BorderPane
 		ChangeListener<Number> stageMoveListener = (pObservableValue, pOldValue, pNewValue) -> updateNotificationPosition();
 		pMainStage.xProperty().addListener(stageMoveListener);
 		pMainStage.yProperty().addListener(stageMoveListener);
+
+		AbstractEdgeConstraint.setEditorFrame(this);
 	}
 	
 	/* Returns the subset of pDesiredFormats for which a registered image writer 
