@@ -28,16 +28,19 @@ public interface Notification
 
     /**
      * Show the Notification object.
-     *
-     * @param pCleanUpCallback The Runnable to run when the notification should be removed from the notification list
      */
-    void show(Runnable pCleanUpCallback);
+    void show();
 
     /**
      * Close the stage of the Notification object (to end it prematurely).
      * Useful when the notifications go beyond the window.
      */
     void close();
+
+    /**
+     * @return The opacity of the notification root.
+     */
+    double getOpacity();
 
     /**
      * Move the Notification object to the desired position on the screen.

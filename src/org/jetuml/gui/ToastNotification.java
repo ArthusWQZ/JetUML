@@ -114,13 +114,20 @@ public final class ToastNotification implements Notification
     }
 
     /**
-     * Shows the Notification object to the screen. This method is also responsible for
-     * terminating the notification and deleting it from the NotificationService notification list.
-     *
-     * @param pCleanUpCallback The Runnable to run when the notification should be removed from the notification list
+     * @return The opacity of the notification root.
      */
     @Override
-    public void show(Runnable pCleanUpCallback)
+    public double getOpacity()
+    {
+        return aStage.getScene().getRoot().getOpacity();
+    }
+
+    /**
+     * Shows the Notification object to the screen. This method is also responsible for
+     * terminating the notification and deleting it from the NotificationService notification list.
+     */
+    @Override
+    public void show()
     {
     	int duration = notificationDurationInMilliseconds();
     	// A duration of zero disables notifications
@@ -143,11 +150,6 @@ public final class ToastNotification implements Notification
                 new KeyValue(aStage.getScene().getRoot().opacityProperty(), 0));
 
         fadeOutTimeline.getKeyFrames().add(fadeOutKey);
-        // We close the stage and execute the callback at the end of the fadeout animation
-        fadeOutTimeline.setOnFinished(actionEvent1 -> {
-            aStage.close();
-            pCleanUpCallback.run();
-        });
 
         Timer notificationTimer = new Timer();
         TimerTask lifespan = new TimerTask()

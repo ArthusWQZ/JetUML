@@ -27,6 +27,7 @@ import org.jetuml.annotations.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Singleton object that manages the notification object positions and display states.
@@ -121,9 +122,17 @@ public final class NotificationService
             return;
         }
 
+        // Garbage collection of older notifications.
+        // Notifications are not automatically closed when they disappear since it makes the JetUML
+        // window flash if it is minimized. - Issue #524
+        Stream<Notification> stream = aNotifications.stream().filter(notification -> notification.getOpacity() == 0);
+        List<Notification> deadNotifications = stream.toList();
+        aNotifications.removeAll(deadNotifications);
+        deadNotifications.forEach(Notification::close);
+
         aNotifications.add(pNotification);
 
-        pNotification.show(() -> aNotifications.remove(pNotification));
+        pNotification.show();
         updateNotificationPosition();
     }
 

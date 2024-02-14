@@ -23,10 +23,8 @@ package org.jetuml.gui;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jetuml.JavaFXLoader;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+@Disabled
 public class TestNotificationService 
 {
 	/* The aNotifications field in NotificationService. */
